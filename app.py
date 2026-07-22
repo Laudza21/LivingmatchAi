@@ -64,7 +64,18 @@ st.markdown(
     .lm-section-sub {{
         font-size: 13px;
         color: #6B6B6B;
-        margin-bottom: 14px;
+        margin-bottom: 6px;
+    }}
+    .lm-algo-tag {{
+        display: inline-block;
+        background: {PRIMARY_LIGHT};
+        color: {PRIMARY};
+        border: 1px solid #CFE9DC;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 11.5px;
+        font-weight: 600;
+        margin-bottom: 12px;
     }}
     div[data-testid="stMetric"] {{
         background: {PRIMARY_LIGHT};
@@ -100,18 +111,20 @@ st.markdown(
     <div class="lm-hero">
         <div class="lm-badge">PROTOTIPE MVP · KEWIRAUSAHAAN SYARIAH</div>
         <h1>🏡 LivingMatch AI</h1>
-        <p>Analisis kualitas lingkungan berbasis AI untuk keputusan pembelian rumah,
-        selaras dengan prinsip transparansi dan kehati-hatian ala keuangan syariah.</p>
+        <p>Asisten AI untuk menganalisis kualitas lingkungan sebelum membeli rumah —
+        mengurangi ketimpangan informasi (information asymmetry) antara pembeli, agen,
+        dan penjual, selaras dengan prinsip transparansi transaksi ala syariah.</p>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 st.info(
-    "**Catatan prototipe (MVP):** skor di bawah dihitung dengan simulasi berbasis "
-    "aturan, bukan model Machine Learning yang sudah dilatih dengan data lingkungan "
-    "riil. Ini merepresentasikan alur dan bentuk output yang akan dihasilkan sistem "
-    "KNN, Random Forest, dan NLP+LLM pada versi produksi."
+    "**Catatan prototipe (MVP):** skor & estimasi harga di bawah dihasilkan dari "
+    "simulasi berbasis aturan (rule-based), bukan model Machine Learning yang sudah "
+    "dilatih dengan data riil. Tampilan ini merepresentasikan alur dan bentuk output "
+    "yang akan dihasilkan sistem Random Forest, KNN, NLP+Naive Bayes+LLM, dan Linear "
+    "Regression pada versi produksi."
 )
 
 # ------------------------------------------------------------------
@@ -119,7 +132,8 @@ st.info(
 # ------------------------------------------------------------------
 st.markdown('<div class="lm-section-title">1. Lokasi & preferensi</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="lm-section-sub">Masukkan data rumah yang sedang kamu pertimbangkan.</div>',
+    '<div class="lm-section-sub">Masukkan rumah yang sedang kamu incar — AI yang akan '
+    'memperkirakan kondisi lingkungan dan estimasi harganya, kamu tidak perlu tahu angkanya duluan.</div>',
     unsafe_allow_html=True,
 )
 
@@ -137,17 +151,10 @@ with st.form("input_form"):
         )
     with col2:
         budget = st.select_slider(
-            "Kelas harga rumah", options=["Menengah", "Menengah-atas", "Premium"]
+            "Kelas harga rumah yang dicari",
+            options=["Menengah", "Menengah-atas", "Premium"],
+            help="Dipakai AI sebagai konteks kisaran pasar saat memperkirakan harga kawasan ini.",
         )
-
-    harga_saat_ini = st.number_input(
-        "Harga rumah saat ini (Rp) — opsional, untuk estimasi nilai ke depan",
-        min_value=0,
-        value=0,
-        step=50_000_000,
-        format="%d",
-        help="Kosongkan (biarkan 0) jika hanya ingin melihat estimasi dalam persentase kenaikan, bukan nominal Rupiah.",
-    )
 
     prioritas = st.multiselect(
         "Prioritas gaya hidup (pilih yang paling penting)",
@@ -187,6 +194,17 @@ if submitted and alamat:
         98, round(neighborhood_score * 0.8 + bobot_prioritas * 3 + rng.randint(-5, 5))
     )
 
+    # --- Simulasi estimasi harga pasar saat ini ---
+    # Merepresentasikan "data historis transaksi" yang dalam produksi diambil dari
+    # basis data pasar properti, bukan diinput manual oleh user.
+    rentang_harga = {
+        "Menengah": (300_000_000, 800_000_000),
+        "Menengah-atas": (800_000_000, 2_000_000_000),
+        "Premium": (2_000_000_000, 8_000_000_000),
+    }
+    low, high = rentang_harga[budget]
+    harga_pasar_estimasi = round(rng.randint(low, high) / 5_000_000) * 5_000_000
+
     st.markdown("---")
     st.markdown('<div class="lm-section-title">2. Hasil analisis</div>', unsafe_allow_html=True)
     st.markdown(
@@ -194,11 +212,16 @@ if submitted and alamat:
         unsafe_allow_html=True,
     )
 
-    c1, c2 = st.columns(2)
+    c1, c2, c3 = st.columns(3)
     c1.metric("Neighborhood Score", f"{neighborhood_score}/100")
     c2.metric("Lifestyle Match Score", f"{lifestyle_score}%")
+    c3.metric("Estimasi Harga Pasar", f"Rp{harga_pasar_estimasi:,.0f}".replace(",", "."))
 
     st.markdown("**Rincian indikator lingkungan**")
+    st.markdown(
+        '<span class="lm-algo-tag">🧩 Ditenagai simulasi Random Forest</span>',
+        unsafe_allow_html=True,
+    )
     df_ind = pd.DataFrame(list(indikator.items()), columns=["Indikator", "Skor"])
     bar_chart = (
         alt.Chart(df_ind)
@@ -212,8 +235,12 @@ if submitted and alamat:
     )
     st.altair_chart(bar_chart, use_container_width=True)
 
-    # --- Simulasi Community Insight (merepresentasikan output NLP + LLM) ---
+    # --- Simulasi Community Insight (merepresentasikan output NLP + Naive Bayes + LLM) ---
     st.markdown("**Community Insight**")
+    st.markdown(
+        '<span class="lm-algo-tag">🧩 Ditenagai simulasi NLP + Naive Bayes + ringkasan LLM</span>',
+        unsafe_allow_html=True,
+    )
     if neighborhood_score >= 80:
         insight = (
             f"Warga sekitar {alamat} umumnya memberi ulasan positif. Lingkungan "
@@ -236,69 +263,45 @@ if submitted and alamat:
 
     # --- Simulasi Property Value Predictor (merepresentasikan output Linear Regression) ---
     st.markdown("**Prediksi tren nilai properti (5 tahun ke depan)**")
+    st.markdown(
+        '<span class="lm-algo-tag">🧩 Ditenagai simulasi Linear Regression</span>',
+        unsafe_allow_html=True,
+    )
 
     growth = rng.uniform(3, 9)
     tahun = list(range(2026, 2031))
+    proyeksi = [round(harga_pasar_estimasi * (1 + growth / 100) ** i) for i in range(5)]
+    df_val = pd.DataFrame({"Tahun": tahun, "Estimasi harga (Rp)": proyeksi})
+    df_val["Tahun"] = df_val["Tahun"].astype(str)
 
-    if harga_saat_ini > 0:
-        # Tampilkan dalam Rupiah asli, bukan indeks abstrak — ini yang bikin jelas
-        proyeksi = [round(harga_saat_ini * (1 + growth / 100) ** i) for i in range(5)]
-        df_val = pd.DataFrame({"Tahun": tahun, "Estimasi harga (Rp)": proyeksi})
-        df_val["Tahun"] = df_val["Tahun"].astype(str)
-
-        line_chart = (
-            alt.Chart(df_val)
-            .mark_line(point=True, color=GOLD, strokeWidth=3)
-            .encode(
-                x=alt.X("Tahun:N", title="Tahun"),
-                y=alt.Y(
-                    "Estimasi harga (Rp):Q",
-                    title="Estimasi harga rumah (Rp)",
-                    axis=alt.Axis(format="~s"),
-                ),
-                tooltip=[
-                    "Tahun",
-                    alt.Tooltip("Estimasi harga (Rp):Q", format=",.0f"),
-                ],
-            )
-            .properties(height=260)
+    line_chart = (
+        alt.Chart(df_val)
+        .mark_line(point=True, color=GOLD, strokeWidth=3)
+        .encode(
+            x=alt.X("Tahun:N", title="Tahun"),
+            y=alt.Y(
+                "Estimasi harga (Rp):Q",
+                title="Estimasi harga rumah (Rp)",
+                axis=alt.Axis(format="~s"),
+                scale=alt.Scale(zero=False),
+            ),
+            tooltip=[
+                "Tahun",
+                alt.Tooltip("Estimasi harga (Rp):Q", format=",.0f"),
+            ],
         )
-        st.altair_chart(line_chart, use_container_width=True)
-        st.caption(
-            f"Sumbu kiri (Y) menunjukkan **estimasi harga rumah dalam Rupiah**, "
-            f"dihitung dari harga awal Rp{harga_saat_ini:,.0f} dengan asumsi "
-            f"pertumbuhan sekitar **{growth:.1f}% per tahun**."
-        )
-    else:
-        # Tanpa harga awal → tampilkan sebagai persentase kenaikan relatif, dijelaskan gamblang
-        proyeksi = [round((1 + growth / 100) ** i - 1, 3) * 100 for i in range(5)]
-        df_val = pd.DataFrame({"Tahun": tahun, "Kenaikan nilai relatif (%)": proyeksi})
-        df_val["Tahun"] = df_val["Tahun"].astype(str)
-
-        line_chart = (
-            alt.Chart(df_val)
-            .mark_line(point=True, color=GOLD, strokeWidth=3)
-            .encode(
-                x=alt.X("Tahun:N", title="Tahun"),
-                y=alt.Y(
-                    "Kenaikan nilai relatif (%):Q",
-                    title="Kenaikan nilai dibanding tahun 2026 (%)",
-                ),
-                tooltip=[
-                    "Tahun",
-                    alt.Tooltip("Kenaikan nilai relatif (%):Q", format=".1f"),
-                ],
-            )
-            .properties(height=260)
-        )
-        st.altair_chart(line_chart, use_container_width=True)
-        st.caption(
-            f"Sumbu kiri (Y) menunjukkan **persentase kenaikan nilai dibanding harga tahun 2026** "
-            f"(bukan nominal Rupiah, karena harga awal belum diisi). Estimasi pertumbuhan: "
-            f"sekitar **{growth:.1f}% per tahun**. Isi kolom 'Harga rumah saat ini' di atas "
-            f"untuk melihat estimasi dalam Rupiah."
-        )
+        .properties(height=260)
+    )
+    st.altair_chart(line_chart, use_container_width=True)
+    st.caption(
+        f"Sumbu kiri (Y) selalu menunjukkan **estimasi harga rumah dalam Rupiah**. "
+        f"Titik tahun 2026 (Rp{harga_pasar_estimasi:,.0f}".replace(",", ".")
+        + f") adalah **estimasi harga pasar saat ini** yang diperkirakan AI dari data historis "
+        f"kawasan & kelas harga yang kamu pilih — bukan input manual. Proyeksi memakai asumsi "
+        f"pertumbuhan sekitar **{growth:.1f}% per tahun** berdasarkan tren infrastruktur & fasilitas sekitar."
+    )
 
     st.success("Analisis selesai — hasil di atas adalah simulasi untuk keperluan demo MVP.")
 
 st.markdown("---")
+st.caption("LivingMatch AI — Prototipe MVP · Proyek Kewirausahaan Syariah")
