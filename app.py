@@ -112,7 +112,7 @@ if submitted and alamat:
     # --- Simulasi Property Value Predictor (merepresentasikan output Linear Regression) ---
     st.markdown("**Prediksi tren nilai properti (5 tahun ke depan)**")
     growth = rng.uniform(3, 9)
-    tahun = list(range(2026, 2031))
+    tahun = [str(t) for t in range(2026, 2031)]  # string biar sumbu chart gak diformat koma ribuan
     proyeksi = [round(100 * (1 + growth / 100) ** i) for i in range(5)]
     chart_df = pd.DataFrame(
         {"Tahun": tahun, "Indeks nilai (basis 2026 = 100)": proyeksi}
@@ -123,4 +123,3 @@ if submitted and alamat:
     st.success("Analisis selesai — hasil di atas adalah simulasi untuk keperluan demo MVP.")
 
 st.divider()
-st.caption("LivingMatch AI — Prototipe MVP · Tugas mata kuliah")
