@@ -489,7 +489,7 @@ if st.session_state.get("has_analysis", False):
             unsafe_allow_html=True,
         )
 
-    # --- TAB 4: PREDIKSI NILAI ---
+    # -- TAB 4: PREDIKSI NILAI --
     with tab_value:
         st.markdown(
             '<span class="lm-algo-tag">🧩 Proyeksi: Linear Regression Trend</span>',
