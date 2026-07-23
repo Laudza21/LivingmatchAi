@@ -9,13 +9,13 @@ import streamlit as st
 from streamlit_folium import st_folium
 
 # ------------------------------------------------------------------
-# CONFIG & PAGE SETUP (Memaksa Sidebar Terbuka)
+# CONFIG & PAGE SETUP
 # ------------------------------------------------------------------
 st.set_page_config(
     page_title="LivingMatch AI",
     page_icon="🏘️",
     layout="wide",
-    initial_sidebar_state="expanded",  
+    initial_sidebar_state="expanded",  # Sidebar otomatis terbuka sejak awal
 )
 
 # ------------------------------------------------------------------
@@ -47,11 +47,12 @@ st.markdown(
         color: {INK};
     }}
 
-    /* Trik CSS: Paksa area sidebar memiliki lebar penuh saat awal dimuat */
-    section[data-testid="stSidebar"] {{
-        width: 330px !important;
+    /* HILANGKAN TEKS "Press Enter to submit form" AGAR TIDAK MENTUMPUK */
+    div[data-testid="InputInstructions"] {{
+        display: none !important;
     }}
 
+    /* Card Styling */
     .lm-card {{
         background: white;
         border: 1px solid #E2E9E5;
@@ -61,6 +62,7 @@ st.markdown(
         margin-bottom: 16px;
     }}
 
+    /* Hero Banner */
     .lm-hero {{
         background: linear-gradient(135deg, {PRIMARY} 0%, {PRIMARY_DARK} 100%);
         padding: 32px;
@@ -95,6 +97,7 @@ st.markdown(
         text-transform: uppercase;
     }}
 
+    /* Tags & Chips */
     .lm-algo-tag {{
         display: inline-block;
         background: {PRIMARY_LIGHT};
@@ -121,6 +124,7 @@ st.markdown(
     }}
     .lm-loc-chip b {{ color: {PRIMARY}; }}
 
+    /* Streamlit Custom Metrics */
     div[data-testid="stMetric"] {{
         background: {PRIMARY_LIGHT};
         border-radius: 12px;
@@ -489,7 +493,7 @@ if st.session_state.get("has_analysis", False):
             unsafe_allow_html=True,
         )
 
-    # -- TAB 4: PREDIKSI NILAI --
+    # --- TAB 4: PREDIKSI NILAI ---
     with tab_value:
         st.markdown(
             '<span class="lm-algo-tag">🧩 Proyeksi: Linear Regression Trend</span>',
