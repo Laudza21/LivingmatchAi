@@ -2,9 +2,10 @@ import random
 import altair as alt
 import numpy as np
 import pandas as pd
-import pydeck as pdk
 import requests
 import streamlit as st
+import folium
+from streamlit_folium import st_folium
 
 # ------------------------------------------------------------------
 # CONFIG & PAGE SETUP
@@ -12,7 +13,7 @@ import streamlit as st
 st.set_page_config(
     page_title="LivingMatch AI",
     page_icon="🏘️",
-    layout="wide",  # Mengubah layout ke wide agar UI terasa modern & lega
+    layout="wide",
     initial_sidebar_state="expanded",
 )
 
@@ -45,7 +46,6 @@ st.markdown(
         color: {INK};
     }}
 
-    /* Card Styling */
     .lm-card {{
         background: white;
         border: 1px solid #E2E9E5;
@@ -55,7 +55,6 @@ st.markdown(
         margin-bottom: 16px;
     }}
 
-    /* Hero Banner */
     .lm-hero {{
         background: linear-gradient(135deg, {PRIMARY} 0%, {PRIMARY_DARK} 100%);
         padding: 32px;
@@ -90,7 +89,6 @@ st.markdown(
         text-transform: uppercase;
     }}
 
-    /* Tags & Chips */
     .lm-algo-tag {{
         display: inline-block;
         background: {PRIMARY_LIGHT};
@@ -117,7 +115,6 @@ st.markdown(
     }}
     .lm-loc-chip b {{ color: {PRIMARY}; }}
 
-    /* Streamlit Components Customization */
     div[data-testid="stMetric"] {{
         background: {PRIMARY_LIGHT};
         border-radius: 12px;
@@ -138,15 +135,14 @@ st.markdown(
 # GEOCODING HELPER
 # ------------------------------------------------------------------
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
-DEFAULT_LAT, DEFAULT_LON = -6.2088, 106.8456  # Fallback default: Jakarta Pusat
+DEFAULT_LAT, DEFAULT_LON = -6.2088, 106.8456
 
 
 @st.cache_data(show_spinner=False, ttl=86400)
 def geocode_address(alamat: str):
-    """Ambil koordinat lokasi dari Nominatim dengan multi-query fallback."""
     queries = [
         alamat if "indonesia" in alamat.lower() else f"{alamat}, Indonesia",
-        alamat,  # pencarian murni tanpa imbuhan
+        alamat,
     ]
     for q in queries:
         try:
@@ -173,7 +169,7 @@ def geocode_address(alamat: str):
 
 
 # ------------------------------------------------------------------
-# CHART HELPERS
+# CHART & MAP HELPERS
 # ------------------------------------------------------------------
 def gauge_chart(
     value: int, color: str, track_color: str = "#E7EEE9", max_value: int = 100
@@ -215,32 +211,16 @@ def gauge_chart(
     return arc + label
 
 
-def render_map(lat: float, lon: float, label: str):
-    df_map = pd.DataFrame({"lat": [lat], "lon": [lon], "label": [label]})
-    layer = pdk.Layer(
-        "ScatterplotLayer",
-        data=df_map,
-        get_position="[lon, lat]",
-        get_fill_color="[184, 134, 11, 220]",
-        get_line_color="[15, 61, 49, 255]",
-        line_width_min_pixels=3,
-        get_radius=150,
-        radius_min_pixels=10,
-        radius_max_pixels=25,
-        stroked=True,
-        pickable=True,
-    )
-    # Pitch dan Bearing ditambahkan sedikit untuk efek 3D modern
-    view_state = pdk.ViewState(
-        latitude=lat, longitude=lon, zoom=14, pitch=35, bearing=0
-    )
-    deck = pdk.Deck(
-        layers=[layer],
-        initial_view_state=view_state,
-        map_style="mapbox://styles/mapbox/light-v10",
-        tooltip={"text": "{label}"},
-    )
-    st.pydeck_chart(deck, use_container_width=True)
+def render_folium_map(lat: float, lon: float, label: str):
+    """Rendering peta menggunakan Folium (Pasti Muncul di semua browser)"""
+    m = folium.Map(location=[lat, lon], zoom_start=14, tiles="OpenStreetMap")
+    folium.Marker(
+        [lat, lon],
+        popup=label,
+        tooltip=label,
+        icon=folium.Icon(color="green", icon="home", prefix="fa"),
+    ).add_to(m)
+    st_folium(m, width="100%", height=400, returned_objects=[])
 
 
 def compose_insight(indikator: dict) -> str:
@@ -290,7 +270,7 @@ st.markdown(
 )
 
 # ------------------------------------------------------------------
-# SIDEBAR / FORM INPUT (UI Lebih Rapi)
+# SIDEBAR / FORM INPUT
 # ------------------------------------------------------------------
 with st.sidebar:
     st.header("⚙️ Parameter Analisis")
@@ -372,7 +352,6 @@ if submitted and alamat:
             round(rng.randint(low, high) / 5_000_000) * 5_000_000
         )
 
-        # Simpan hasil analisis ke session_state agar tidak hilang saat pindah tab
         st.session_state["has_analysis"] = True
         st.session_state["analysis_data"] = {
             "alamat": alamat,
@@ -395,7 +374,6 @@ elif submitted and not alamat:
 if st.session_state.get("has_analysis", False):
     data = st.session_state["analysis_data"]
 
-    # Chip Info Lokasi
     if data["lokasi_ditemukan"]:
         st.markdown(
             f'<div class="lm-loc-chip">📍 Lokasi Terdeteksi: <b>{data["lokasi_label"]}</b> '
@@ -410,7 +388,6 @@ if st.session_state.get("has_analysis", False):
 
     st.write("")
 
-    # Main Dashboard Tabs
     tab_overview, tab_detail, tab_insight, tab_value = st.tabs(
         [
             "📊 Ringkasan",
@@ -459,7 +436,7 @@ if st.session_state.get("has_analysis", False):
             )
 
         st.subheader("📍 Peta Interaktif Lokasi Target")
-        render_map(data["lat"], data["lon"], data["lokasi_label"])
+        render_folium_map(data["lat"], data["lon"], data["lokasi_label"])
 
     # --- TAB 2: DETAIL INDIKATOR ---
     with tab_detail:
