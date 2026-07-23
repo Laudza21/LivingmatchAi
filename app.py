@@ -1,10 +1,11 @@
 import random
+import re
 import altair as alt
+import folium
 import numpy as np
 import pandas as pd
 import requests
 import streamlit as st
-import folium
 from streamlit_folium import st_folium
 
 # ------------------------------------------------------------------
@@ -132,28 +133,45 @@ st.markdown(
 )
 
 # ------------------------------------------------------------------
-# GEOCODING HELPER
+# IMPROVED GEOCODING HELPER
 # ------------------------------------------------------------------
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
-DEFAULT_LAT, DEFAULT_LON = -6.2088, 106.8456
+# Fallback Default: Tugu Yogyakarta (Lebih relevan untuk konteks DIY/Jateng)
+DEFAULT_LAT, DEFAULT_LON = -7.7829, 110.3671
 
 
 @st.cache_data(show_spinner=False, ttl=86400)
 def geocode_address(alamat: str):
+    """Pencarian Geocoding cerdas dengan batasan negara Indonesia (countrycodes=id)
+
+    dan penanganan variasi penulisan.
+    """
+    clean_addr = alamat.strip()
+
+    # Variasi pencarian dari yang paling spesifik ke umum
     queries = [
-        alamat if "indonesia" in alamat.lower() else f"{alamat}, Indonesia",
-        alamat,
+        clean_addr,
+        f"{clean_addr}, Indonesia",
+        re.sub(r"(?i)\bjalan\b|\bjl\.\b|\bjl\b", "Jl.", clean_addr),
     ]
+
+    headers = {
+        "User-Agent": "LivingMatchApp/3.0 (contact: admin@livingmatch.id)"
+    }
+
     for q in queries:
         try:
+            params = {
+                "q": q,
+                "format": "json",
+                "limit": 1,
+                "addressdetails": 1,
+                "countrycodes": "id",  # Mengunci pencarian HANYA di wilayah Indonesia
+            }
             resp = requests.get(
-                NOMINATIM_URL,
-                params={"q": q, "format": "json", "limit": 1, "addressdetails": 1},
-                headers={
-                    "User-Agent": "LivingMatchAI-MVP/2.0 (student-project; contact: livingmatch@example.com)"
-                },
-                timeout=5,
+                NOMINATIM_URL, params=params, headers=headers, timeout=6
             )
+
             if resp.status_code == 200:
                 data = resp.json()
                 if data:
@@ -165,6 +183,7 @@ def geocode_address(alamat: str):
                     }
         except Exception:
             continue
+
     return None
 
 
@@ -212,15 +231,15 @@ def gauge_chart(
 
 
 def render_folium_map(lat: float, lon: float, label: str):
-    """Rendering peta menggunakan Folium (Pasti Muncul di semua browser)"""
-    m = folium.Map(location=[lat, lon], zoom_start=14, tiles="OpenStreetMap")
+    """Render Folium Map dengan penanda lokasi yang presisi"""
+    m = folium.Map(location=[lat, lon], zoom_start=15, tiles="OpenStreetMap")
     folium.Marker(
         [lat, lon],
         popup=label,
         tooltip=label,
         icon=folium.Icon(color="green", icon="home", prefix="fa"),
     ).add_to(m)
-    st_folium(m, width="100%", height=400, returned_objects=[])
+    st_folium(m, width="100%", height=420, returned_objects=[])
 
 
 def compose_insight(indikator: dict) -> str:
@@ -277,7 +296,7 @@ with st.sidebar:
     with st.form("input_form"):
         alamat = st.text_input(
             "Lokasi / Alamat Rumah Target",
-            placeholder="Contoh: Jl. Kaliurang KM 10, Sleman",
+            placeholder="Contoh: Jalan Magelang, Yogyakarta",
         )
         profil = st.selectbox(
             "Profil Pengguna",
@@ -318,7 +337,7 @@ if submitted and alamat:
             lokasi_ditemukan = True
         else:
             lat, lon = DEFAULT_LAT, DEFAULT_LON
-            lokasi_label = alamat
+            lokasi_label = f"{alamat} (Estimasi Pusat Yogyakarta)"
             lokasi_ditemukan = False
 
         seed_key = f"{round(lat, 3)}_{round(lon, 3)}"
@@ -382,8 +401,8 @@ if st.session_state.get("has_analysis", False):
         )
     else:
         st.warning(
-            f"⚠️ Alamat **'{data['alamat']}'** tidak ditemukan secara rinci di OpenStreetMap. "
-            f"Menampilkan koordinat default perkiraan."
+            f"⚠️ Lokasi spesifik untuk **'{data['alamat']}'** tidak ditemukan di OpenStreetMap. "
+            f"Menampilkan titik pusat Yogyakarta sebagai perkiraan."
         )
 
     st.write("")
