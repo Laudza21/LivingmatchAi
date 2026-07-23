@@ -9,13 +9,13 @@ import streamlit as st
 from streamlit_folium import st_folium
 
 # ------------------------------------------------------------------
-# CONFIG & PAGE SETUP
+# CONFIG & PAGE SETUP (Memaksa Sidebar Terbuka)
 # ------------------------------------------------------------------
 st.set_page_config(
     page_title="LivingMatch AI",
     page_icon="🏘️",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="expanded",  # Meminta Streamlit membuka sidebar secara default
 )
 
 # ------------------------------------------------------------------
@@ -45,6 +45,11 @@ st.markdown(
         background-color: #F8FAF9;
         font-family: {FONT_BODY};
         color: {INK};
+    }}
+
+    /* Trik CSS: Paksa area sidebar memiliki lebar penuh saat awal dimuat */
+    section[data-testid="stSidebar"] {{
+        width: 330px !important;
     }}
 
     .lm-card {{
@@ -133,28 +138,20 @@ st.markdown(
 )
 
 # ------------------------------------------------------------------
-# IMPROVED GEOCODING HELPER
+# GEOCODING HELPER
 # ------------------------------------------------------------------
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
-# Fallback Default: Tugu Yogyakarta (Lebih relevan untuk konteks DIY/Jateng)
-DEFAULT_LAT, DEFAULT_LON = -7.7829, 110.3671
+DEFAULT_LAT, DEFAULT_LON = -7.7829, 110.3671  # Yogyakarta Tugu
 
 
 @st.cache_data(show_spinner=False, ttl=86400)
 def geocode_address(alamat: str):
-    """Pencarian Geocoding cerdas dengan batasan negara Indonesia (countrycodes=id)
-
-    dan penanganan variasi penulisan.
-    """
     clean_addr = alamat.strip()
-
-    # Variasi pencarian dari yang paling spesifik ke umum
     queries = [
         clean_addr,
         f"{clean_addr}, Indonesia",
         re.sub(r"(?i)\bjalan\b|\bjl\.\b|\bjl\b", "Jl.", clean_addr),
     ]
-
     headers = {
         "User-Agent": "LivingMatchApp/3.0 (contact: admin@livingmatch.id)"
     }
@@ -166,12 +163,11 @@ def geocode_address(alamat: str):
                 "format": "json",
                 "limit": 1,
                 "addressdetails": 1,
-                "countrycodes": "id",  # Mengunci pencarian HANYA di wilayah Indonesia
+                "countrycodes": "id",
             }
             resp = requests.get(
                 NOMINATIM_URL, params=params, headers=headers, timeout=6
             )
-
             if resp.status_code == 200:
                 data = resp.json()
                 if data:
@@ -183,7 +179,6 @@ def geocode_address(alamat: str):
                     }
         except Exception:
             continue
-
     return None
 
 
@@ -231,7 +226,6 @@ def gauge_chart(
 
 
 def render_folium_map(lat: float, lon: float, label: str):
-    """Render Folium Map dengan penanda lokasi yang presisi"""
     m = folium.Map(location=[lat, lon], zoom_start=15, tiles="OpenStreetMap")
     folium.Marker(
         [lat, lon],
