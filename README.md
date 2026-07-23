@@ -2,7 +2,7 @@
 
 Aplikasi analisis kualitas lingkungan berbasis Artificial Intelligence untuk membantu keputusan pembelian rumah.
 
-Prototipe ini dibuat untuk memenuhi tugas mata kuliah — mendemonstrasikan alur pengguna dan bentuk output dari tiga fitur AI utama (Lifestyle Match Score, Neighborhood Score, Community Insight) tanpa model Machine Learning terlatih penuh. Skor dan insight dihasilkan lewat simulasi berbasis aturan yang merepresentasikan output yang akan dihasilkan algoritma KNN, Random Forest, dan NLP+LLM pada versi produksi.
+Prototipe ini dibuat untuk memenuhi tugas mata kuliah Kewirausahaan Syariah untuk mendemonstrasikan alur pengguna dan bentuk output dari tiga fitur AI utama (Lifestyle Match Score, Neighborhood Score, Community Insight) tanpa model Machine Learning terlatih penuh. Skor dan insight dihasilkan lewat simulasi berbasis aturan yang merepresentasikan output yang akan dihasilkan algoritma KNN, Random Forest, dan NLP+LLM pada versi produksi.
 
 ## Fitur pada prototipe
 - Form input alamat, profil pengguna, dan prioritas gaya hidup
