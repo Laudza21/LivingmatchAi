@@ -192,7 +192,7 @@ st.markdown(
 st.markdown(
     """
     <div class="lm-hero">
-        <div class="lm-badge">Prototipe MVP · Kewirausahaan Syariah</div>
+        <div class="lm-badge">Prototipe MVP </div>
         <h1>🏘️ LivingMatch AI</h1>
         <p>"Skor kredit untuk lingkungan rumah" — merangkum keamanan, risiko banjir, kualitas
         udara, kemacetan, kebisingan, dan aksesibilitas fasilitas umum suatu kawasan menjadi
@@ -206,12 +206,11 @@ st.info(
     "**Catatan prototipe (MVP):** skor lingkungan & estimasi harga di bawah dihasilkan dari "
     "simulasi berbasis aturan (rule-based), bukan model Machine Learning yang sudah dilatih "
     "dengan data riil — merepresentasikan bentuk output dari Random Forest, KNN, NLP+Naive "
-    "Bayes+LLM, dan Linear Regression pada versi produksi. **Titik lokasi di peta bersifat "
-    "nyata**, diambil dari layanan geocoding terbuka OpenStreetMap (Nominatim), bukan simulasi."
+    "Bayes+LLM, dan Linear Regression pada versi produksi. **Titik lokasi di peta diambil dari layanan geocoding terbuka OpenStreetMap (Nominatim)."
 )
 
 # ------------------------------------------------------------------
-# GEOCODING (DATA NYATA — OpenStreetMap Nominatim, gratis tanpa API key)
+# GEOCODING ( OpenStreetMap Nominatim, gratis tanpa API key)
 # ------------------------------------------------------------------
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 DEFAULT_LAT, DEFAULT_LON = -7.7956, 110.3695  # fallback: pusat Yogyakarta
