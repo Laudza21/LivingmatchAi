@@ -24,5 +24,5 @@ streamlit run app.py
 4. Klik **Deploy** — link live akan otomatis muncul (format `https://<nama-app>.streamlit.app`).
 
 ## Tim
-- Luadza Muhammad Anwar Lahiz (23523005)
-- Faiz Galen Ganedra (23523110)
+- Laudza Muhammad Anwar Lahiz (23523005)
+- Faiz Galen Ganendra (23523110)
