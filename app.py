@@ -521,6 +521,10 @@ if submitted and alamat:
         proyeksi = [round(harga_pasar_estimasi * (1 + growth / 100) ** i) for i in range(5)]
         df_val = pd.DataFrame({"Tahun": tahun, "Estimasi harga (Rp)": proyeksi})
         df_val["Tahun"] = df_val["Tahun"].astype(str)
+        # Sumbu Y ditampilkan dalam "miliar Rupiah" (bukan notasi SI k/M/G bawaan
+        # Altair) supaya tidak salah dibaca — "G" di Altair berarti Giga (10^9),
+        # gampang tertukar dengan kebiasaan orang Indonesia menulis "M" = Miliar.
+        df_val["Estimasi harga (miliar Rp)"] = df_val["Estimasi harga (Rp)"] / 1_000_000_000
 
         line_chart = (
             alt.Chart(df_val)
@@ -528,12 +532,15 @@ if submitted and alamat:
             .encode(
                 x=alt.X("Tahun:N", title="Tahun"),
                 y=alt.Y(
-                    "Estimasi harga (Rp):Q",
-                    title="Estimasi harga rumah (Rp)",
-                    axis=alt.Axis(format="~s"),
+                    "Estimasi harga (miliar Rp):Q",
+                    title="Estimasi harga rumah (miliar Rupiah)",
+                    axis=alt.Axis(format=",.2f"),
                     scale=alt.Scale(zero=False),
                 ),
-                tooltip=["Tahun", alt.Tooltip("Estimasi harga (Rp):Q", format=",.0f")],
+                tooltip=[
+                    "Tahun",
+                    alt.Tooltip("Estimasi harga (Rp):Q", format=",.0f", title="Estimasi harga (Rp)"),
+                ],
             )
             .properties(height=260)
         )
@@ -546,5 +553,3 @@ if submitted and alamat:
 
     st.success("Analisis selesai — skor & narasi di atas adalah simulasi untuk keperluan demo MVP; titik lokasi bersumber nyata dari OpenStreetMap.")
 
-st.markdown("---")
-st.caption("LivingMatch AI · Prototipe MVP · Jurusan Informatika, Universitas Islam Indonesia")
