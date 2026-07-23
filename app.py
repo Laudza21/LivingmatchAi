@@ -15,7 +15,7 @@ st.set_page_config(
     page_title="LivingMatch AI",
     page_icon="🏘️",
     layout="wide",
-    initial_sidebar_state="expanded",  # Meminta Streamlit membuka sidebar secara default
+    initial_sidebar_state="expanded",  
 )
 
 # ------------------------------------------------------------------
